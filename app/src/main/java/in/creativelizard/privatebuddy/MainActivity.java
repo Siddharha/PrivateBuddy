@@ -12,13 +12,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +32,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
     private ImageView imgView;
     private Pref _pref;
+    private EditText etImagePath,etFileName;
+    private Spinner spFiles;
+    TextView tvFileCount;
+    private ArrayList<String> fileList;
+    private ArrayAdapter<String> arrayAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +46,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void initialize() {
         imgView = (ImageView)findViewById(R.id.imageView);
+        etImagePath = (EditText)findViewById(R.id.etImagePath);
+        etFileName = (EditText)findViewById(R.id.etName);
+        tvFileCount = (TextView)findViewById(R.id.tvFileCount);
+        spFiles = (Spinner)findViewById(R.id.spFiles);
+        fileList = new ArrayList<>();
+        tvFileCount.setText("No. Of Files saved : "+ String.valueOf(fileCount()));
+        arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,fileList);
+        spFiles.setAdapter(arrayAdapter);
+
         _pref = new Pref(this);
     }
 
@@ -52,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void clkOpen(View v){
-        loadImageFromStorage(_pref.getSession(ConstantClass.SAVED_PATH));
+        loadImageFromStorage(etImagePath.getText().toString());
     }
 
     private String saveToInternalStorage(Bitmap bitmapImage){
@@ -60,8 +79,8 @@ public class MainActivity extends AppCompatActivity {
         // path to /data/data/yourapp/app_data/imageDir
         File directory = cw.getDir("sid_img_private", Context.MODE_PRIVATE);
         // Create imageDir
-        File mypath=new File(directory,"sid.jpg");
-        _pref.setSession(ConstantClass.SAVED_PATH,directory.getPath());
+        File mypath=new File(directory,etFileName.getText().toString() +".jpg");
+        //_pref.setSession(ConstantClass.SAVED_PATH,directory.getPath());
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(mypath);
@@ -82,7 +101,8 @@ public class MainActivity extends AppCompatActivity {
     {
 
         try {
-            File f=new File(path, "sid.jpg");
+            //etFileName.setText(_pref.getSession(ConstantClass.SAVED_PATH));
+            File f=new File(path, (String) spFiles.getSelectedItem());
             Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
             imgView.setImageBitmap(b);
         }
@@ -131,6 +151,19 @@ public class MainActivity extends AppCompatActivity {
         cursor.close();
 
         return filePath;
+    }
+
+    private int fileCount(){
+        File file=new File(etImagePath.getText().toString());
+        File[] list = file.listFiles();
+        int count = 0;
+        for (File f: list){
+            String name = f.getName();
+            fileList.add(name);
+            if (name.endsWith(".jpg") || name.endsWith(".mp3") || name.endsWith(".some media extention"))
+                count++;
+        }
+            return  count;
     }
 }
 
